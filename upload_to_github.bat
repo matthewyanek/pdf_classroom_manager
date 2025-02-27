@@ -46,11 +46,11 @@ git commit -m "Initial commit: PDF Classroom Manager with database and batch ope
 
 echo.
 echo Please enter your GitHub username:
-set /p GITHUB_USERNAME=matthewyanek
+set /p GITHUB_USERNAME=
 
 echo.
 echo Please enter your repository name (e.g., pdf-classroom-manager):
-set /p REPO_NAME=pdf-classroom-manager
+set /p REPO_NAME=
 
 echo.
 echo Adding remote repository...
