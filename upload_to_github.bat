@@ -35,6 +35,7 @@ echo # Project specific >> .gitignore
 echo storage/ >> .gitignore
 echo pdf_manager.db >> .gitignore
 
+<<<<<<< HEAD
 REM Check if git repository already exists
 if exist .git (
     echo Git repository already exists, skipping initialization.
@@ -42,10 +43,15 @@ if exist .git (
     echo Initializing Git repository...
     git init
 )
+=======
+echo Initializing Git repository...
+git init
+>>>>>>> 47ffd58bce77d1cb9ec9534739b5d1244d3688d8
 
 echo Adding files to Git...
 git add .
 
+<<<<<<< HEAD
 echo.
 echo Please enter your commit message:
 echo (Press Enter for default: "Update: PDF Classroom Manager")
@@ -54,6 +60,10 @@ if "%COMMIT_MESSAGE%"=="" set COMMIT_MESSAGE=Update: PDF Classroom Manager
 
 echo Creating commit with message: "%COMMIT_MESSAGE%"
 git commit -m "%COMMIT_MESSAGE%"
+=======
+echo Creating initial commit...
+git commit -m "Initial commit: PDF Classroom Manager with database and batch operations"
+>>>>>>> 47ffd58bce77d1cb9ec9534739b5d1244d3688d8
 
 echo.
 echo Please enter your GitHub username:
@@ -63,6 +73,7 @@ echo.
 echo Please enter your repository name (e.g., pdf-classroom-manager):
 set /p REPO_NAME=
 
+<<<<<<< HEAD
 REM Check if remote already exists
 git remote -v | findstr "origin" > nul
 if %ERRORLEVEL% EQU 0 (
@@ -123,6 +134,22 @@ if %ERRORLEVEL% NEQ 0 (
     ) else (
         echo Exiting without pushing. You can push manually later.
     )
+=======
+echo.
+echo Adding remote repository...
+git remote add origin https://github.com/%GITHUB_USERNAME%/%REPO_NAME%.git
+
+echo Pushing to GitHub...
+git push -u origin master
+
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo Note: If you're seeing authentication errors, you might need to:
+    echo 1. Use a personal access token instead of your password
+    echo 2. Configure Git to use the GitHub CLI or credential manager
+    echo.
+    echo For more information, visit: https://docs.github.com/en/authentication
+>>>>>>> 47ffd58bce77d1cb9ec9534739b5d1244d3688d8
 )
 
 echo.
