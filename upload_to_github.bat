@@ -57,7 +57,7 @@ echo Adding remote repository...
 git remote add origin https://github.com/%GITHUB_USERNAME%/%REPO_NAME%.git
 
 echo Pushing to GitHub...
-git push -u origin master
+git push -u origin main
 
 if %ERRORLEVEL% NEQ 0 (
     echo.
