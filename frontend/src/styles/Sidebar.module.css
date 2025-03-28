@@ -1,0 +1,135 @@
+/* src/styles/Sidebar.module.css */
+.sidebar {
+  width: 250px;
+  min-width: 250px;
+  background-color: #1A202C;
+  color: #E2E8F0;
+  height: 100%;
+  overflow-y: auto;
+  transition: width 0.3s, min-width 0.3s;
+  border-right: 1px solid #2D3748;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar.collapsed {
+  width: 60px;
+  min-width: 60px;
+}
+
+.sidebarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #2D3748;
+}
+
+.sidebarTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.collapseButton {
+  background: none;
+  border: none;
+  color: #718096;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.collapseButton:hover {
+  background-color: #2D3748;
+  color: #E2E8F0;
+}
+
+.sidebarContent {
+  padding: 1rem 0;
+}
+
+.navGroup {
+  margin-bottom: 1rem;
+}
+
+.navGroupLabel {
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  color: #CBD5E0;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.navItem:hover {
+  background-color: #2D3748;
+  color: #F7FAFC;
+}
+
+.navItem.active {
+  background-color: #2C5282;
+  color: #F7FAFC;
+  border-left-color: #4299E1;
+}
+
+.navItemIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 0.75rem;
+  color: #718096;
+}
+
+.navItem:hover .navItemIcon,
+.navItem.active .navItemIcon {
+  color: #F7FAFC;
+}
+
+.navItemText {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navItemBadge {
+  background-color: #2D3748;
+  color: #CBD5E0;
+  font-size: 0.75rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 9999px;
+}
+
+.navItem.active .navItemBadge {
+  background-color: #2B4F76;
+  color: #E2E8F0;
+}
+
+.newFolderButton {
+  color: #4299E1;
+}
+
+.newFolderButton:hover {
+  color: #63B3ED;
+}
+
+.newFolderButton .navItemIcon {
+  color: #4299E1;
+}
+
+.newFolderButton:hover .navItemIcon {
+  color: #63B3ED;
+}

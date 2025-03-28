@@ -13,6 +13,16 @@ pdf_tags = Table(
     Column("tag_id", Integer, ForeignKey("tags.id"))
 )
 
+class Folder(Base):
+    __tablename__ = "folders"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    
+    # Relationship to PDFs
+    pdfs = relationship("PDF", back_populates="folder")
+
 class PDF(Base):
     __tablename__ = "pdfs"
     
@@ -20,8 +30,10 @@ class PDF(Base):
     filename = Column(String, index=True)
     path = Column(String)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    folder_id = Column(Integer, ForeignKey("folders.id"), nullable=True)
     
-    # Relationship to tags
+    # Relationships
+    folder = relationship("Folder", back_populates="pdfs")
     tags = relationship("Tag", secondary=pdf_tags, back_populates="pdfs")
 
 class Tag(Base):
