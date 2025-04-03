@@ -3,8 +3,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
-import traceback
-from sqlalchemy import inspect
 
 from app.core.config import settings
 from app.core.database import create_tables, engine
@@ -13,10 +11,10 @@ from app.api.router import api_router
 # Create the FastAPI app
 app = FastAPI(title="PDF Manager API")
 
-# Configure CORS - IMPORTANT: Allow your frontend origin
+# Configure CORS - Using the same config that worked in our test server
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],  # Add your frontend URL
+    allow_origins=["*"],  # For development, use ["http://localhost:3000"] for production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

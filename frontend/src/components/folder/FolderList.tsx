@@ -19,7 +19,7 @@ const FolderList: React.FC<FolderListProps> = ({
   onSelectFolder,
   onRefresh,
   refreshTrigger,
-  folders = [],
+  folders = [], // Default to empty array if undefined
   unfiledCount,
   onRenameFolder,
   onDeleteFolder
@@ -67,6 +67,9 @@ const FolderList: React.FC<FolderListProps> = ({
     }
   };
 
+  // Ensure folders is an array
+  const folderArray = Array.isArray(folders) ? folders : [];
+
   return (
     <div>
       <ul className="space-y-1 mb-4">
@@ -95,7 +98,7 @@ const FolderList: React.FC<FolderListProps> = ({
             <span className="text-gray-400">{unfiledCount}</span>
           </button>
         </li>
-        {folders.map(folder => (
+        {folderArray.map(folder => (
           <li key={folder.id}>
             {editingFolderId === folder.id ? (
               <form 

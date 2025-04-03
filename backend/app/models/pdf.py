@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Table
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Table, BigInteger
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -21,6 +21,7 @@ class PDF(Base):
     tags = Column(String, nullable=True)  # Comma-separated tags (legacy)
     folder_id = Column(Integer, ForeignKey("folders.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+#    size = Column(BigInteger, nullable=True)  # File size in bytes
     
     folder = relationship("Folder", back_populates="pdfs")
     tag_objects = relationship("Tag", secondary=pdf_tags, back_populates="pdfs")

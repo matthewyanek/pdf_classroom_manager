@@ -101,6 +101,24 @@ async def get_pdfs(
         if pdf.tags and pdf.tags.strip():
             tags_list = [tag.strip() for tag in pdf.tags.split(",") if tag.strip()]
             
+        # This whole file size calculation block should be INSIDE the for loop
+        file_size = 0  # Default to 0 instead of None
+        try:
+            # Get the actual file path
+            file_path = pdf.path
+            if file_path.startswith("uploads/"):
+                # Get just the filename
+                filename = os.path.basename(pdf.path)
+                # Look in the uploads directory
+                file_path = os.path.join(settings.UPLOAD_DIR, filename)
+            
+            if os.path.exists(file_path):
+                file_size = os.path.getsize(file_path)
+            else:
+                print(f"Warning: File not found at {file_path} for PDF {pdf.id}")
+        except Exception as e:
+            print(f"Error calculating file size for {pdf.filename}: {str(e)}")
+
         result.append({
             "id": pdf.id,
             "filename": pdf.filename,
@@ -108,10 +126,11 @@ async def get_pdfs(
             "tags": tags_list,
             "folder_id": pdf.folder_id,
             "folder_name": folder_name,
-            "created_at": pdf.created_at
+            "created_at": pdf.created_at,
+            "size": file_size  # Use calculated file size
         })
     
-    return result
+    return result  # THIS LINE WAS MISSING
 
 @router.post("/upload")
 async def upload_pdf(
@@ -140,7 +159,8 @@ async def upload_pdf(
         
         print(f"Saving file to: {file_path}")
         
-        # Save the file
+        # Save the file and calculate size
+        file_size = 0
         try:
             with open(file_path, "wb") as buffer:
                 # Read the file in chunks to handle large files
@@ -150,8 +170,9 @@ async def upload_pdf(
                     if not chunk:
                         break
                     buffer.write(chunk)
+                    file_size += len(chunk)
             
-            print(f"File saved successfully to {file_path}")
+            print(f"File saved successfully to {file_path} with size {file_size} bytes")
         except Exception as e:
             print(f"Error saving file: {str(e)}")
             print(traceback.format_exc())
@@ -171,7 +192,8 @@ async def upload_pdf(
                 filename=file.filename,
                 path=f"uploads/{filename}",
                 tags=tags if tags else None,
-                folder_id=parsed_folder_id
+                folder_id=parsed_folder_id,
+                #size=file_size  # Store the file size
             )
             db.add(pdf)
             db.commit()
@@ -208,7 +230,8 @@ async def upload_pdf(
                 "tags": tags_list,
                 "folder_id": parsed_folder_id,
                 "folder_name": folder_name,
-                "created_at": pdf.created_at
+                "created_at": pdf.created_at,
+                "size": file_size  # Include size in the response
             }
         except Exception as e:
             print(f"Error creating database record: {str(e)}")
@@ -228,6 +251,7 @@ async def upload_pdf(
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Unexpected error during upload: {str(e)}")
 
+
 @router.get("/{pdf_id}")
 async def get_pdf(pdf_id: int, db: Session = Depends(get_db)):
     """Get a specific PDF by ID"""
@@ -245,6 +269,22 @@ async def get_pdf(pdf_id: int, db: Session = Depends(get_db)):
     if pdf.tags and pdf.tags.strip():
         tags_list = [tag.strip() for tag in pdf.tags.split(",") if tag.strip()]
     
+    # Calculate file size
+    file_size = None
+    try:
+        # Get the actual file path
+        file_path = pdf.path
+        if file_path.startswith("uploads/"):
+            # Get just the filename
+            filename = os.path.basename(pdf.path)
+            # Look in the uploads directory
+            file_path = os.path.join(settings.UPLOAD_DIR, filename)
+        
+        if os.path.exists(file_path):
+            file_size = os.path.getsize(file_path)
+    except Exception as e:
+        print(f"Error calculating file size for {pdf.filename}: {str(e)}")
+    
     return {
         "id": pdf.id,
         "filename": pdf.filename,
@@ -252,7 +292,8 @@ async def get_pdf(pdf_id: int, db: Session = Depends(get_db)):
         "tags": tags_list,
         "folder_id": pdf.folder_id,
         "folder_name": folder_name,
-        "created_at": pdf.created_at
+        "created_at": pdf.created_at,
+        "size": file_size  # Use calculated file size instead of pdf.size
     }
 
 @router.put("/{pdf_id}/tags")
@@ -262,12 +303,19 @@ async def update_pdf_tags(pdf_id: int, data: Dict[str, Any] = Body(...), db: Ses
     if not pdf:
         raise HTTPException(status_code=404, detail="PDF not found")
     
-    tags = data.get("tags", "")
-    pdf.tags = tags
+    tags = data.get("tags", [])
+    
+    # Convert list of tags to comma-separated string
+    if isinstance(tags, list):
+        tags_str = ",".join(tags)
+    else:
+        tags_str = tags
+    
+    pdf.tags = tags_str
     
     # Update tags table
     if tags:
-        tag_list = [tag.strip() for tag in tags.split(',') if tag.strip()]
+        tag_list = tags if isinstance(tags, list) else [tag.strip() for tag in tags_str.split(',') if tag.strip()]
         for tag_name in tag_list:
             existing_tag = db.query(Tag).filter(Tag.name == tag_name).first()
             if not existing_tag:
@@ -277,13 +325,33 @@ async def update_pdf_tags(pdf_id: int, data: Dict[str, Any] = Body(...), db: Ses
     
     # Handle tags properly for response
     tags_list = []
-    if tags and tags.strip():
-        tags_list = [tag.strip() for tag in tags.split(",") if tag.strip()]
+    if isinstance(tags, list):
+        tags_list = tags
+    elif tags_str and tags_str.strip():
+        tags_list = [tag.strip() for tag in tags_str.split(",") if tag.strip()]
+    
+    # Calculate file size
+    file_size = None
+    try:
+        # Get the actual file path
+        file_path = pdf.path
+        if file_path.startswith("uploads/"):
+            # Get just the filename
+            filename = os.path.basename(pdf.path)
+            # Look in the uploads directory
+            file_path = os.path.join(settings.UPLOAD_DIR, filename)
+        
+        if os.path.exists(file_path):
+            file_size = os.path.getsize(file_path)
+    except Exception as e:
+        print(f"Error calculating file size for {pdf.filename}: {str(e)}")
     
     return {
         "id": pdf.id,
-        "tags": tags_list
+        "tags": tags_list,
+        "size": file_size  # Use calculated file size instead of pdf.size
     }
+
 
 @router.delete("/{pdf_id}")
 async def delete_pdf(pdf_id: int, db: Session = Depends(get_db)):
@@ -503,3 +571,64 @@ async def download_pdf(pdf_id: int, db: Session = Depends(get_db)):
         filename=pdf.filename,
         headers={"Content-Disposition": f"attachment; filename={pdf.filename}"}
     )
+
+@router.put("/{pdf_id}/rename")
+async def rename_pdf(
+    pdf_id: int, 
+    data: Dict[str, Any] = Body(...), 
+    db: Session = Depends(get_db)
+):
+    """Rename a PDF file"""
+    pdf = db.query(PDF).filter(PDF.id == pdf_id).first()
+    if not pdf:
+        raise HTTPException(status_code=404, detail="PDF not found")
+    
+    new_filename = data.get("filename")
+    if not new_filename:
+        raise HTTPException(status_code=400, detail="New filename is required")
+    
+    # Ensure the filename ends with .pdf
+    if not new_filename.lower().endswith('.pdf'):
+        new_filename += '.pdf'
+    
+    # Update the filename in the database
+    pdf.filename = new_filename
+    db.commit()
+    
+    # Calculate file size
+    file_size = 0
+    try:
+        # Get the actual file path
+        file_path = pdf.path
+        if file_path.startswith("uploads/"):
+            # Get just the filename
+            filename = os.path.basename(pdf.path)
+            # Look in the uploads directory
+            file_path = os.path.join(settings.UPLOAD_DIR, filename)
+        
+        if os.path.exists(file_path):
+            file_size = os.path.getsize(file_path)
+    except Exception as e:
+        print(f"Error calculating file size for {pdf.filename}: {str(e)}")
+    
+    # Get folder name
+    folder_name = None
+    if pdf.folder_id:
+        folder = db.query(Folder).filter(Folder.id == pdf.folder_id).first()
+        folder_name = folder.name if folder else None
+    
+    # Handle tags properly
+    tags_list = []
+    if pdf.tags and pdf.tags.strip():
+        tags_list = [tag.strip() for tag in pdf.tags.split(",") if tag.strip()]
+    
+    return {
+        "id": pdf.id,
+        "filename": pdf.filename,
+        "path": pdf.path,
+        "tags": tags_list,
+        "folder_id": pdf.folder_id,
+        "folder_name": folder_name,
+        "created_at": pdf.created_at,
+        "size": file_size
+    }
