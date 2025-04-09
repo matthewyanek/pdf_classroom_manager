@@ -1,0 +1,83 @@
+Folder PATH listing
+Volume serial number is BAD2-5922
+C:.
+|   tree.txt
+|   
++---components
+|   +---common
+|   |       AdvancedSearch.tsx
+|   |       AnimatedContainer.tsx
+|   |       ThemeToggle.tsx
+|   |       
+|   +---debug
+|   |       DebugPanel.tsx
+|   |       
+|   +---folder
+|   |       ColorPicker.tsx
+|   |       FolderList.tsx
+|   |       FolderManager.tsx
+|   |       NewFolderModal.tsx
+|   |       
+|   +---layout
+|   |       Header.tsx
+|   |       Layout.tsx
+|   |       MainContent.tsx
+|   |       Sidebar.tsx
+|   |       
+|   +---pdf
+|   |       AiTagButton.tsx
+|   |       BatchOperationsBar.tsx
+|   |       EditPdfModal.tsx
+|   |       PDFList.tsx
+|   |       PDFUpload.tsx
+|   |       PDFUploadSlim.tsx
+|   |       PDFViewer.tsx
+|   |       SimplePDFViewer.tsx
+|   |       
+|   +---tag
+|   |       TagList.tsx
+|   |       TagsEditor.tsx
+|   |       
+|   \---upload
+|           UploadButton.tsx
+|           
++---contexts
+|       ThemeContext.tsx
+|       
++---hooks
+|       index.ts
+|       useFolders.ts
+|       useLocalStorage.ts
+|       usePDFs.ts
+|       useTags.ts
+|       
++---pages
+|   |   index.tsx
+|   |   _app.tsx
+|   |   
+|   \---api
+|       \---tags
+|               generate.ts
+|               
++---services
+|       api-client.ts
+|       api.ts
+|       folderService.ts
+|       pdfService.ts
+|       tagService.ts
+|       
++---styles
+|       globals.css
+|       Sidebar.module.css
+|       
++---types
+|       folder.ts
+|       pdf.ts
+|       tag.ts
+|       
+\---utils
+        colors.ts
+        formatters.ts
+        normalize.ts
+        pdf-utils.ts
+        

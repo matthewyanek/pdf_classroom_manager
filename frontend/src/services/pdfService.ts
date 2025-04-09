@@ -89,8 +89,9 @@ export const pdfService = {
   },
   
   async movePDFsToFolder(pdfIds: number[], folderId: number | null) {
+    console.log('Moving PDFs to folder:', { pdfIds, folderId });
     try {
-      const response = await axios.put('/api/pdfs/move', {
+      const response = await axios.post('/api/pdfs/move', {
         pdf_ids: pdfIds,
         folder_id: folderId
       });
@@ -107,6 +108,25 @@ export const pdfService = {
       return response.data;
     } catch (error) {
       console.error('Error updating tags:', error);
+      throw error;
+    }
+  },
+
+  // New function for renaming PDFs
+  async renamePDF(pdfId: number, newFilename: string) {
+    try {
+      // Ensure filename has .pdf extension
+      if (!newFilename.toLowerCase().endsWith('.pdf')) {
+        newFilename += '.pdf';
+      }
+      
+      const response = await axios.put(`/api/pdfs/${pdfId}/rename`, {
+        filename: newFilename
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error renaming PDF:', error);
       throw error;
     }
   }

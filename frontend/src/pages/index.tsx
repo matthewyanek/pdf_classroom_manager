@@ -1,8 +1,11 @@
+// frontend/src/pages/index.tsx
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Sidebar from '../components/layout/Sidebar';
 import PDFViewer from '../components/pdf/PDFViewer';
+import PDFActions from '../components/pdf/PDFActions';
 import { PDF, Folder, Tag } from '../types/pdf';
+import { pdfService } from '../services/pdfService';
 
 export default function Home() {
   // State
@@ -17,6 +20,8 @@ export default function Home() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [unfiledCount, setUnfiledCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedPDFs, setSelectedPDFs] = useState<number[]>([]);
+  const [showFolderDropdown, setShowFolderDropdown] = useState(false);
 
   // Load data from backend
   useEffect(() => {
@@ -159,6 +164,10 @@ export default function Home() {
       if (response.ok) {
         // Remove from local state
         setPdfs(prevPdfs => prevPdfs.filter(pdf => pdf.id !== pdfId));
+        // If this PDF was in the selected PDFs list, remove it
+        if (selectedPDFs.includes(pdfId)) {
+          setSelectedPDFs(prevSelected => prevSelected.filter(id => id !== pdfId));
+        }
         triggerRefresh();
         return true;
       } else {
@@ -169,6 +178,36 @@ export default function Home() {
       console.error('Error deleting PDF:', error);
       return false;
     }
+  };
+
+  // Move PDFs to folder
+  const movePDFsToFolder = async (pdfIds: number[], folderId: number | null) => {
+    try {
+      console.log('Moving PDFs to folder:', { pdfIds, folderId });
+      await pdfService.movePDFsToFolder(pdfIds, folderId);
+      triggerRefresh();
+      return true;
+    } catch (error) {
+      console.error('Error moving PDFs:', error);
+      return false;
+    }
+  };
+
+  // Handle PDF selection
+  const handlePDFSelection = (pdfId: number, isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedPDFs(prev => [...prev, pdfId]);
+    } else {
+      setSelectedPDFs(prev => prev.filter(id => id !== pdfId));
+    }
+  };
+
+  // Handle move to folder
+  const handleMoveToFolder = (folderId: number | null) => {
+    if (selectedPDFs.length === 0) return;
+    
+    movePDFsToFolder(selectedPDFs, folderId);
+    setSelectedPDFs([]);
   };
 
   // Handle folder selection
@@ -388,6 +427,69 @@ export default function Home() {
                     : `Folder: ${folders.find(f => f.id === selectedFolderId)?.name || 'Unknown'}`}
             </h2>
             
+            {/* Batch operations bar */}
+            {selectedPDFs.length > 0 && (
+              <div className="flex items-center justify-between p-3 bg-gray-800 rounded-md mb-4">
+                <div className="text-sm text-gray-300">
+                  {selectedPDFs.length} PDF{selectedPDFs.length !== 1 ? 's' : ''} selected
+                </div>
+                <div className="flex space-x-2">
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowFolderDropdown(!showFolderDropdown)}
+                      className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
+                    >
+                      Move to Folder
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    
+                    {showFolderDropdown && (
+                      <div className="absolute right-0 mt-1 w-48 bg-gray-700 rounded-md shadow-lg z-10">
+                        <div className="py-1">
+                          <button
+                            onClick={() => {
+                              handleMoveToFolder(null);
+                              setShowFolderDropdown(false);
+                            }}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-600"
+                          >
+                            Unfiled
+                          </button>
+                          
+                          {folders.map(folder => (
+                            <button
+                              key={folder.id}
+                              onClick={() => {
+                                handleMoveToFolder(folder.id);
+                                setShowFolderDropdown(false);
+                              }}
+                              className="block w-full text-left px-4 py-2 text-sm text-gray-300 hover:bg-gray-600"
+                            >
+                              {folder.name}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      if (confirm(`Are you sure you want to delete ${selectedPDFs.length} PDFs?`)) {
+                        selectedPDFs.forEach(id => deletePdf(id));
+                        setSelectedPDFs([]);
+                      }
+                    }}
+                    className="px-3 py-1 text-sm bg-red-600 text-white rounded-md hover:bg-red-700"
+                  >
+                    Delete Selected
+                  </button>
+                </div>
+              </div>
+            )}
+            
             {isLoading ? (
               <div className="flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -399,38 +501,54 @@ export default function Home() {
                 {filteredPdfs.map((pdf) => (
                   <div
                     key={pdf.id}
-                    className="group p-4 bg-gray-800 rounded-md cursor-pointer hover:bg-gray-700 transition-colors relative"
+                    className={`group p-4 bg-gray-800 rounded-md hover:bg-gray-700 transition-colors relative ${
+                      selectedPDFs.includes(pdf.id) ? 'ring-2 ring-blue-500' : ''
+                    }`}
                   >
-                    <div 
-                      className="flex items-center mb-2"
-                      onClick={() => setSelectedPdf(pdf)}
-                    >
+                    <div className="flex items-center mb-2">
+                      {/* Checkbox for selection */}
+                      <div 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePDFSelection(pdf.id, !selectedPDFs.includes(pdf.id));
+                        }}
+                        className={`w-5 h-5 rounded border ${
+                          selectedPDFs.includes(pdf.id) 
+                            ? 'bg-blue-500 border-blue-600' 
+                            : 'border-gray-500 bg-gray-700'
+                        } mr-2 flex items-center justify-center cursor-pointer`}
+                      >
+                        {selectedPDFs.includes(pdf.id) && (
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </div>
+
                       {/* File Icon */}
-                      <svg className="w-5 h-5 text-blue-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <svg 
+                        className="w-5 h-5 text-blue-400 mr-2" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24" 
+                        xmlns="http://www.w3.org/2000/svg"
+                        onClick={() => setSelectedPdf(pdf)}
+                      >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      <span className="truncate">{pdf.filename}</span>
+                      
+                      {/* Filename */}
+                      <span 
+                        className="truncate cursor-pointer" 
+                        onClick={() => setSelectedPdf(pdf)}
+                      >
+                        {pdf.filename}
+                      </span>
                     </div>
-                    
-                    {/* Delete button - only visible on hover */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (confirm(`Are you sure you want to delete "${pdf.filename}"?`)) {
-                          deletePdf(pdf.id);
-                        }
-                      }}
-                      className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Delete PDF"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
                     
                     {/* Display tags if available */}
                     <div 
-                      className="flex flex-wrap gap-1 mt-2"
+                      className="flex flex-wrap gap-1 mt-2 mb-6" // Added margin-bottom to make room for action buttons
                       onClick={() => setSelectedPdf(pdf)}
                     >
                       {pdf.tags && pdf.tags.length > 0 ? (
@@ -453,6 +571,19 @@ export default function Home() {
                     >
                       {formatFileSize(pdf.size)}
                     </div>
+                    
+                    {/* PDF Actions - positioned in bottom right corner */}
+                    <PDFActions
+                      pdf={pdf}
+                      onView={(id, filename) => setSelectedPdf(pdf)}
+                      onDownload={(id, filename) => pdfService.downloadPDF(id, filename)}
+                      onDelete={(id) => {
+                        if (confirm(`Are you sure you want to delete "${pdf.filename}"?`)) {
+                          deletePdf(id);
+                        }
+                      }}
+                      onRefresh={triggerRefresh}
+                    />
                   </div>
                 ))}
               </div>
